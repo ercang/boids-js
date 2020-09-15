@@ -3,12 +3,12 @@ import Entity from './Entity.js'
 import SimpleRenderer from './SimpleRenderer.js'
 
 document.addEventListener('DOMContentLoaded', () => {
-    const boidsController = new BoidsController();
+    const boidsController = new BoidsController(2000, 600, 2000);
 
     const boundary = boidsController.getBoundary();
 
     // add 50 flock entities
-    for(let i=0; i<60; i++)
+    for(let i=0; i<300; i++)
     {
         const rx = Math.floor(Math.random() * boundary[0]);
         const ry = Math.floor(Math.random() * boundary[1]);

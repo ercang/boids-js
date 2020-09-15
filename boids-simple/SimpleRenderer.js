@@ -1,38 +1,67 @@
+import Stats from 'https://cdnjs.cloudflare.com/ajax/libs/stats.js/r17/Stats.min.js'
+
 export default class SimpleRenderer {
     constructor(boidsController) {
         this.boidsController = boidsController;
+        this.entityMeshes = {};
+        this.obstacleMeshes = {};
 
         this.isDragging = false;
         this.mouseX = 0;
         this.mouseY = 0;
-        this.degX = 0;
-        this.degY = 0;
+        this.degX = 45;
+        this.degY = 60;
+        const b = this.boidsController.getBoundary();
+        this.cameraMax = Math.max(b[0], b[1], b[2]);
+        this.cameraRadius = this.cameraMax;
+
+        this.stats = undefined;
     }
 
     init() {
-        this.camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.01, 10000 );
+        this.initStats();
+
+        this.camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.01, 100000 );
         this.camera.position.z = 0;
      
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color( 0xffffff );
      
-        this.geometry = new THREE.BoxGeometry( 0.05, 0.05, 0.05 );
-        this.geometry2 = new THREE.BoxGeometry( 0.05, 0.05, 0.05 );
-        this.material = new THREE.MeshNormalMaterial();
-        this.material2 = new THREE.MeshPhongMaterial({
-            color: 0xFF0000,    // red (can also use a CSS color string here)
-            flatShading: true,
-          });
+        this.entityGeometry = new THREE.BoxGeometry( 5, 5, 15 );
+        this.obstacleGeometry = new THREE.SphereGeometry( 50, 15, 15 );
+        this.entityMaterial = new THREE.MeshNormalMaterial();
+        this.obstacleMaterial = new THREE.MeshNormalMaterial();
+
+        // create boundary wireframe
+        const b = this.boidsController.getBoundary();
+        var geometry = new THREE.BoxGeometry(b[0], b[1], b[2]);
+        var wireframe = new THREE.EdgesGeometry(geometry);
+        var line = new THREE.LineSegments(wireframe);
+        line.material.depthTest = false;
+        line.material.color = new THREE.Color( 0x000000 );
+        line.material.transparent = false;
+        line.position.x = b[0]/2;
+        line.position.y = b[1]/2;
+        line.position.z = b[2]/2;
+        this.scene.add(line);
      
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(this.renderer.domElement);
 
-        this.drawAnimationFrame();
-
         this.renderer.domElement.addEventListener('mousedown', this.onMouseDown.bind(this));
         this.renderer.domElement.addEventListener('mouseup', this.onMouseUp.bind(this));
         this.renderer.domElement.addEventListener('mousemove', this.onMouseMove.bind(this));
+        this.renderer.domElement.addEventListener('wheel', this.onMouseWheel.bind(this));
+
+        this.updateCamera();
+        this.drawAnimationFrame();
+    }
+
+    initStats() {
+        this.stats = new Stats();
+        this.stats.showPanel(0);
+        document.body.appendChild(this.stats.dom);
     }
 
     onMouseDown(e) {
@@ -53,65 +82,91 @@ export default class SimpleRenderer {
         this.mouseY = e.offsetY;
     
         this.degX += dx;
-        this.degY += dy;
-    
-        this.camera.position.x = Math.sin(this.degX/20)*2;
-        this.camera.position.z = Math.cos(this.degX/20)*2;
-    
-        this.camera.position.y = Math.cos(this.degY/20)*2;
-        this.camera.lookAt( 0, 0, 0 );
+        if(this.degX > 360) this.degX = 0;
+        if(this.degX < 0) this.degX = 360;
+
+        this.degY += dy/3;
+        this.degY = Math.max(0.1, this.degY);
+        this.degY = Math.min(179.9, this.degY);
+        
+        this.updateCamera();
     }
 
     onMouseUp(e) {
         this.isDragging = false;
     }
 
+    onMouseWheel(e) {
+        e.preventDefault();
+        this.cameraRadius += e.deltaY * -1;
+        this.cameraRadius = Math.max(1, this.cameraRadius);
+        this.cameraRadius = Math.min(this.cameraMax, this.cameraRadius);
+        this.updateCamera();
+    }
+
+    updateCamera() {
+        const b = this.boidsController.getBoundary();
+        const midX = b[0]/2;
+        const midY = b[1]/2;
+        const midZ = b[2]/2;
+
+        const degXPI = this.degX*Math.PI/180;
+        const degYPI = this.degY*Math.PI/180;
+        this.camera.position.x = midX + Math.sin(degXPI)*Math.sin(degYPI)*this.cameraRadius;
+        this.camera.position.z = midZ + Math.cos(degXPI)*Math.sin(degYPI)*this.cameraRadius;
+        this.camera.position.y = midY + Math.cos(degYPI)*this.cameraRadius;
+
+        this.camera.lookAt(midX, midY, midZ);
+    }
+
     drawAnimationFrame() {
         window.requestAnimationFrame(this.drawAnimationFrame.bind(this));
 
+        this.stats.begin();
+
         const entities = this.boidsController.getFlockEntities();
         entities.forEach(entity => {
-            const x = entity.x/250 -1;
-            const y = entity.y/250 -1;
-            const z = entity.z/250 -1;
-            const vx = (entity.vx/250 -1)*Math.PI*100;
-            const vy = (entity.vy/250 -1)*Math.PI*100;
-            const vz = (entity.vz/250 -1)*Math.PI*100;
-            if(entity.mesh == undefined) {
-                const m = new THREE.Mesh(this.geometry, this.material);
-                this.scene.add( m );
-                entity.mesh = m;
+            const x = entity.x;
+            const y = entity.y;
+            const z = entity.z;
+            const vx = entity.vx;
+            const vy = entity.vy;
+            const vz = entity.vz;
+            if(!this.entityMeshes[entity.id]) {
+                const m = new THREE.Mesh(this.entityGeometry, this.entityMaterial);
+                this.scene.add(m);
+                this.entityMeshes[entity.id] = m;
             }
 
-            entity.mesh.position.x = x;
-            entity.mesh.position.y = y;
-            entity.mesh.position.z = -z;
-
-            // find direction
-            entity.mesh.rotation.x = vx;
-            entity.mesh.rotation.y = vy;
-            entity.mesh.rotation.z = vz;
+            const mesh = this.entityMeshes[entity.id];
+            mesh.position.x = x;
+            mesh.position.y = y;
+            mesh.position.z = z;
+            mesh.lookAt(x + vx, y + vy, z + vz);
         });
 
         const obstacles = this.boidsController.getObstacleEntities();
         obstacles.forEach(entity => {
-            const x = entity.x/250 -1;
-            const y = entity.y/250 -1;
-            const z = entity.z/250 -1;
-            if(entity.mesh == undefined) {
-                const m = new THREE.Mesh(this.geometry2, this.material2);
-                this.scene.add( m );
-                entity.mesh = m;
+            const x = entity.x;
+            const y = entity.y;
+            const z = entity.z;
+            if(!this.obstacleMeshes[entity.id]) {
+                const m = new THREE.Mesh(this.obstacleGeometry, this.obstacleMaterial);
+                this.scene.add(m);
+                this.obstacleMeshes[entity.id] = m;
             }
 
-            entity.mesh.position.x = x;
-            entity.mesh.position.y = y;
-            entity.mesh.position.z = -z;
+            const mesh = this.obstacleMeshes[entity.id];
+            mesh.position.x = x;
+            mesh.position.y = y;
+            mesh.position.z = z;
         })
         
         // iterate
         this.boidsController.iterate();
 
         this.renderer.render(this.scene, this.camera);
+
+        this.stats.end();
     }
 }
