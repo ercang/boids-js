@@ -1,7 +1,5 @@
-import Stats from 'https://cdnjs.cloudflare.com/ajax/libs/stats.js/r17/Stats.min.js'
-
 export default class SimpleRenderer {
-    constructor(boidsController) {
+    constructor({boidsController}) {
         this.boidsController = boidsController;
         this.entityMeshes = {};
         this.obstacleMeshes = {};
@@ -13,14 +11,10 @@ export default class SimpleRenderer {
         this.degY = 60;
         const b = this.boidsController.getBoundary();
         this.cameraMax = Math.max(b[0], b[1], b[2]);
-        this.cameraRadius = this.cameraMax;
-
-        this.stats = undefined;
+        this.cameraRadius = this.cameraMax*2/3;
     }
 
     init() {
-        this.initStats();
-
         this.camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.01, 100000 );
         this.camera.position.z = 0;
      
@@ -37,7 +31,7 @@ export default class SimpleRenderer {
         var geometry = new THREE.BoxGeometry(b[0], b[1], b[2]);
         var wireframe = new THREE.EdgesGeometry(geometry);
         var line = new THREE.LineSegments(wireframe);
-        line.material.depthTest = false;
+        //line.material.depthTest = false;
         line.material.color = new THREE.Color( 0x000000 );
         line.material.transparent = false;
         line.position.x = b[0]/2;
@@ -55,13 +49,7 @@ export default class SimpleRenderer {
         this.renderer.domElement.addEventListener('wheel', this.onMouseWheel.bind(this));
 
         this.updateCamera();
-        this.drawAnimationFrame();
-    }
-
-    initStats() {
-        this.stats = new Stats();
-        this.stats.showPanel(0);
-        document.body.appendChild(this.stats.dom);
+        this.render();
     }
 
     onMouseDown(e) {
@@ -119,11 +107,7 @@ export default class SimpleRenderer {
         this.camera.lookAt(midX, midY, midZ);
     }
 
-    drawAnimationFrame() {
-        window.requestAnimationFrame(this.drawAnimationFrame.bind(this));
-
-        this.stats.begin();
-
+    render() {
         const entities = this.boidsController.getFlockEntities();
         entities.forEach(entity => {
             const x = entity.x;
@@ -132,13 +116,13 @@ export default class SimpleRenderer {
             const vx = entity.vx;
             const vy = entity.vy;
             const vz = entity.vz;
-            if(!this.entityMeshes[entity.id]) {
-                const m = new THREE.Mesh(this.entityGeometry, this.entityMaterial);
-                this.scene.add(m);
-                this.entityMeshes[entity.id] = m;
+            let mesh = this.entityMeshes[entity.id];
+            if(!mesh) {
+                mesh = new THREE.Mesh(this.entityGeometry, this.entityMaterial);
+                this.scene.add(mesh);
+                this.entityMeshes[entity.id] = mesh;
             }
 
-            const mesh = this.entityMeshes[entity.id];
             mesh.position.x = x;
             mesh.position.y = y;
             mesh.position.z = z;
@@ -150,23 +134,18 @@ export default class SimpleRenderer {
             const x = entity.x;
             const y = entity.y;
             const z = entity.z;
-            if(!this.obstacleMeshes[entity.id]) {
-                const m = new THREE.Mesh(this.obstacleGeometry, this.obstacleMaterial);
-                this.scene.add(m);
-                this.obstacleMeshes[entity.id] = m;
+            let mesh = this.obstacleMeshes[entity.id];
+            if(!mesh) {
+                mesh = new THREE.Mesh(this.obstacleGeometry, this.obstacleMaterial);
+                this.scene.add(mesh);
+                this.obstacleMeshes[entity.id] = mesh;
             }
-
-            const mesh = this.obstacleMeshes[entity.id];
+            
             mesh.position.x = x;
             mesh.position.y = y;
             mesh.position.z = z;
         })
-        
-        // iterate
-        this.boidsController.iterate();
 
         this.renderer.render(this.scene, this.camera);
-
-        this.stats.end();
     }
 }

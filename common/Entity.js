@@ -15,7 +15,7 @@ export default class Entity {
         return Math.sqrt((this.vx*this.vx)+(this.vy*this.vy)+(this.vz*this.vz));
     }
 
-    normalizeVelocity(maxVelocity = 1) {
+    checkVelocity(maxVelocity = 1) {
         const velocity = this.getVelocity();
         if(velocity > maxVelocity) {
             this.vx = maxVelocity*this.vx/velocity;
@@ -31,18 +31,35 @@ export default class Entity {
     }
 
     move(maxVelocity, bx, by, bz) {
-        this.normalizeVelocity(maxVelocity);
+        this.checkVelocity(maxVelocity);
 
         this.x += this.vx;
         this.y += this.vy;
         this.z += this.vz;
 
-        this.x = this.x < 0 ? bx : this.x;
-        this.x = this.x > bx ? 0 : this.x;
-        this.y = this.y < 0 ? by : this.y;
-        this.y = this.y > by ? 0 : this.y;
-        this.z = this.z < 0 ? bz : this.z;
-        this.z = this.z > bz ? 0 : this.z;
+        if(this.x < 0) {
+            this.x = 0;
+            this.vx = -this.vx;
+        } else if(this.x > bx) {
+            this.x = bx;
+            this.vx = -this.vx;
+        }
+
+        if(this.y < 0) {
+            this.y = 0;
+            this.vy = -this.vy;
+        } else if(this.y > by) {
+            this.y = by;
+            this.vy = -this.vy;
+        }
+
+        if(this.z < 0) {
+            this.z = 0;
+            this.vz = -this.vz;
+        } else if(this.z > bz) {
+            this.z = bz;
+            this.vz = -this.vz;
+        }
     }
 
     getDistance(otherEntity) {

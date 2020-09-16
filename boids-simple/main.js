@@ -1,37 +1,46 @@
-import BoidsController from './BoidsController.js'
-import Entity from './Entity.js'
-import SimpleRenderer from './SimpleRenderer.js'
+import BoidsController from '../common/BoidsController.js'
+import SimpleRenderer from '../common/SimpleRenderer.js'
+import ControlHelper from '../common/ControlHelper.js'
 
-document.addEventListener('DOMContentLoaded', () => {
-    const boidsController = new BoidsController(2000, 600, 2000);
 
-    const boundary = boidsController.getBoundary();
-
-    // add 50 flock entities
-    for(let i=0; i<300; i++)
-    {
-        const rx = Math.floor(Math.random() * boundary[0]);
-        const ry = Math.floor(Math.random() * boundary[1]);
-        const rz = Math.floor(Math.random() * boundary[2]);
-        const vx = (Math.random() * 4) - 2;
-        const vy = (Math.random() * 4) - 2;
-        const vz = (Math.random() * 4) - 2;
-        
-        const entity = new Entity(rx, ry, rz, vx, vy, vz);
-        boidsController.addFlockEntity(entity);
+class Application {
+    constructor(flockEntityCount=300, obstacleEntityCount=30) {
+        this.flockEntityCount = flockEntityCount;
+        this.obstacleEntityCount = obstacleEntityCount;
+        this.simpleRenderer = undefined;
+        this.boidsController = undefined;
+        this.controlHelper = undefined;
     }
 
-    // add 10 obstacles
-    for(let i=0; i<10; i++)
-    {
-        const rx = Math.floor(Math.random() * boundary[0]);
-        const ry = Math.floor(Math.random() * boundary[1]);
-        const rz = Math.floor(Math.random() * boundary[2]);
+    init() {
+        this.boidsController = new BoidsController(2000, 600, 2000);
+
+        // init renderer
+        this.simpleRenderer = new SimpleRenderer({boidsController: this.boidsController});
+        this.simpleRenderer.init();
+
+        this.controlHelper = new ControlHelper(this.boidsController);
+        this.controlHelper.init();
+
+        // add initial entities
+        this.controlHelper.addBoids(this.flockEntityCount);
+        this.controlHelper.addObstacles(this.obstacleEntityCount);
         
-        const entity = new Entity(rx, ry, rz);
-        boidsController.addObstacleEntity(entity);
+        // request frame
+        window.requestAnimationFrame(this.render.bind(this));
     }
 
-    const simpleRenderer = new SimpleRenderer(boidsController);
-    simpleRenderer.init();
-});
+    render() {
+        window.requestAnimationFrame(this.render.bind(this));
+    
+        this.controlHelper.statBegin();
+        
+        this.boidsController.iterate();
+        this.simpleRenderer.render();
+        
+        this.controlHelper.statEnd();
+    }
+
+}
+
+document.addEventListener('DOMContentLoaded', (new Application()).init());

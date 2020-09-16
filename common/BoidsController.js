@@ -61,8 +61,9 @@ export default class BoidsController {
         this.boundaryZ = z;
     }
 
-    iterate() {
-        this.flockEntities.forEach(entity => {
+    iterate(start=0, end=this.flockEntities.length) {
+        for(let i=start; i<end; i++) {
+            const entity = this.flockEntities[i];
             const aligmentVel = this.computeAlignment(entity);
             const cohVel = this.computeCohesion(entity);
             const sepVel = this.computeSeparation(entity);
@@ -78,7 +79,7 @@ export default class BoidsController {
 
             entity.addVelocity(vx, vy, vz);
             entity.move(this.maxEntitySpeed, this.boundaryX, this.boundaryY, this.boundaryZ);
-        })
+        }
     }
 
     computeAlignment(entity) {
