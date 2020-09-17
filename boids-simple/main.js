@@ -4,9 +4,9 @@ import ControlHelper from '../common/ControlHelper.js'
 
 
 class Application {
-    constructor(flockEntityCount=300, obstacleEntityCount=30) {
-        this.flockEntityCount = flockEntityCount;
-        this.obstacleEntityCount = obstacleEntityCount;
+    constructor() {
+        this.flockEntityCount = 400;
+        this.obstacleEntityCount = 50;
         this.simpleRenderer = undefined;
         this.boidsController = undefined;
         this.controlHelper = undefined;
@@ -19,7 +19,7 @@ class Application {
         this.simpleRenderer = new SimpleRenderer({boidsController: this.boidsController});
         this.simpleRenderer.init();
 
-        this.controlHelper = new ControlHelper(this.boidsController);
+        this.controlHelper = new ControlHelper(this.boidsController, this.simpleRenderer);
         this.controlHelper.init();
 
         // add initial entities

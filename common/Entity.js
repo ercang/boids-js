@@ -1,14 +1,27 @@
 let idCounter = 0;
 
 export default class Entity {
-    constructor(x=0, y=0, z=0, vx=0, vy=0, vz=0) {
+    static FLOCK_ENTITY = 1;
+    static OBSTACLE_ENTITY = 2;
+
+    constructor(type, x=0, y=0, z=0, vx=0, vy=0, vz=0) {
         this.id = ++idCounter;
+        this.type = type;
         this.x = x;
         this.y = y;
         this.z = z;
         this.vx = vx;
         this.vy = vy;
         this.vz = vz;
+        this.grid = undefined;
+    }
+
+    setGrid(grid) {
+        this.grid = grid;
+    }
+
+    getType() {
+        return this.type;
     }
 
     getVelocity() {
@@ -33,33 +46,36 @@ export default class Entity {
     move(maxVelocity, bx, by, bz) {
         this.checkVelocity(maxVelocity);
 
-        this.x += this.vx;
-        this.y += this.vy;
-        this.z += this.vz;
+        let nx = this.x + this.vx;
+        let ny = this.y + this.vy;
+        let nz = this.z + this.vz;
 
-        if(this.x < 0) {
-            this.x = 0;
+        if(nx < 0) {
+            nx = 0;
             this.vx = -this.vx;
-        } else if(this.x > bx) {
-            this.x = bx;
+        } else if(nx > bx) {
+            nx = bx;
             this.vx = -this.vx;
         }
 
-        if(this.y < 0) {
-            this.y = 0;
+        if(ny < 0) {
+            ny = 0;
             this.vy = -this.vy;
-        } else if(this.y > by) {
-            this.y = by;
+        } else if(ny > by) {
+            ny = by;
             this.vy = -this.vy;
         }
 
-        if(this.z < 0) {
-            this.z = 0;
+        if(nz < 0) {
+            nz = 0;
             this.vz = -this.vz;
-        } else if(this.z > bz) {
-            this.z = bz;
+        } else if(nz > bz) {
+            nz = bz;
             this.vz = -this.vz;
         }
+
+        // TODO: update grid
+        this.grid.moveEntity(this, nx, ny, nz);
     }
 
     getDistance(otherEntity) {

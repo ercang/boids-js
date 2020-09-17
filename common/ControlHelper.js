@@ -4,8 +4,9 @@ import Entity from './Entity.js'
 let stats = undefined;
 
 export default class ControlHelper {
-    constructor(boidsController) {
+    constructor(boidsController, renderer) {
         this.boidsController = boidsController;
+        this.renderer = renderer;
     }
 
     init() {
@@ -19,8 +20,11 @@ export default class ControlHelper {
         gui.add(this.boidsController, 'cohesionWeight',0,5).name('Cohesion');
         gui.add(this.boidsController, 'separationWeight',0,5).name('Separation');
         gui.add(this.boidsController, 'maxEntitySpeed',1,10).name('Max Speed');
-        gui.add(this, 'addBoids').name('Add 20 Boids');
-        gui.add(this, 'addObstacles').name('Add 5 Obstacles');
+        gui.add(this.renderer.gridVisual, 'visible').name('Show Grid');
+        this.boidsButton = gui.add(this, 'addBoids');
+        this.obstacleButton = gui.add(this, 'addObstacles');
+        
+        this.updateButtonLabels();
     }
 
     statBegin() {
@@ -41,9 +45,11 @@ export default class ControlHelper {
             const vy = (Math.random() * 4) - 2;
             const vz = (Math.random() * 4) - 2;
             
-            const entity = new Entity(x, y, z, vx, vy, vz);
+            const entity = new Entity(Entity.FLOCK_ENTITY, x, y, z, vx, vy, vz);
             this.boidsController.addFlockEntity(entity);
         }
+
+        this.updateButtonLabels();
     }
 
     addObstacles(obstacleCount = 5) {
@@ -53,8 +59,15 @@ export default class ControlHelper {
             const y = Math.floor(Math.random() * boundary[1]);
             const z = Math.floor(Math.random() * boundary[2]);
             
-            const entity = new Entity(x, y, z);
+            const entity = new Entity(Entity.OBSTACLE_ENTITY, x, y, z);
             this.boidsController.addObstacleEntity(entity);
         }
+
+        this.updateButtonLabels();
+    }
+
+    updateButtonLabels() {
+        this.boidsButton.name('Add Boids (' + this.boidsController.getFlockEntities().length + ')');
+        this.obstacleButton.name('Add Obs (' + this.boidsController.getObstacleEntities().length + ')');
     }
 }

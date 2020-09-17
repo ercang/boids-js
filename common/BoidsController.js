@@ -1,5 +1,12 @@
+import Entity from './Entity.js';
+import Grid from './Grid.js'
+
 export default class BoidsController {
-    constructor(boundaryX = 500, boundaryY = 500, boundaryZ = 500) {
+    constructor(boundaryX = 500, boundaryY = 500, boundaryZ = 500, subDivisionCount=1) {
+        const maxSize = Math.max(boundaryX, boundaryY, boundaryZ);
+        this.grid = new Grid(maxSize, maxSize/subDivisionCount);
+        this.subDivisionCount = subDivisionCount;
+
         this.flockEntities = [];
         this.obstacleEntities = [];
 
@@ -20,6 +27,7 @@ export default class BoidsController {
     }
 
     addFlockEntity(entity) {
+        this.grid.addEntity(entity);
         this.flockEntities.push(entity);
     }
 
@@ -28,6 +36,7 @@ export default class BoidsController {
     }
 
     addObstacleEntity(entity) {
+        this.grid.addEntity(entity);
         this.obstacleEntities.push(entity);
     }
 
@@ -71,11 +80,11 @@ export default class BoidsController {
 
             // add components
             const vx = this.aligmentWeight*aligmentVel[0] + this.cohesionWeight*cohVel[0] +
-                        50*this.separationWeight*sepVel[0] + 50*obsVel[0];
+                        50*this.separationWeight*sepVel[0] + 100*obsVel[0];
             const vy = this.aligmentWeight*aligmentVel[1] + this.cohesionWeight*cohVel[1] +
-                        50*this.separationWeight*sepVel[1] + 50*obsVel[1];
+                        50*this.separationWeight*sepVel[1] + 100*obsVel[1];
             const vz = this.aligmentWeight*aligmentVel[2] + this.cohesionWeight*cohVel[2] +
-                        50*this.separationWeight*sepVel[2] + 50*obsVel[2];
+                        50*this.separationWeight*sepVel[2] + 100*obsVel[2];
 
             entity.addVelocity(vx, vy, vz);
             entity.move(this.maxEntitySpeed, this.boundaryX, this.boundaryY, this.boundaryZ);
@@ -88,19 +97,16 @@ export default class BoidsController {
         let aligmentZ = 0;
         let neighborCount = 0;
 
-        this.flockEntities.forEach(currentEntity => {
+        this.grid.getEntitiesInCube(entity.x, entity.y, entity.z, this.aligmentRadius, (currentEntity) => {
             if(currentEntity != entity &&
-                Math.abs(entity.x-currentEntity.x) < this.aligmentRadius &&
-                Math.abs(entity.y-currentEntity.y) < this.aligmentRadius &&
-                Math.abs(entity.z-currentEntity.z) < this.aligmentRadius &&
-                entity.getDistance(currentEntity) < this.aligmentRadius) {
+               currentEntity.getType() == Entity.FLOCK_ENTITY &&
+               entity.getDistance(currentEntity) < this.aligmentRadius) {
                 neighborCount++;
                 aligmentX += currentEntity.vx;
                 aligmentY += currentEntity.vy;
                 aligmentZ += currentEntity.vz;
             }
         });
-
 
         if(neighborCount > 0)
         {
@@ -122,12 +128,10 @@ export default class BoidsController {
         let cohZ = 0;
         let neighborCount = 0;
 
-        this.flockEntities.forEach(currentEntity => {
+        this.grid.getEntitiesInCube(entity.x, entity.y, entity.z, this.cohesionRadius, (currentEntity) => {
             if(currentEntity != entity &&
-                Math.abs(entity.x-currentEntity.x) < this.cohesionRadius &&
-                Math.abs(entity.y-currentEntity.y) < this.cohesionRadius &&
-                Math.abs(entity.z-currentEntity.z) < this.cohesionRadius &&
-                entity.getDistance(currentEntity) < this.cohesionRadius) {
+               currentEntity.getType() == Entity.FLOCK_ENTITY &&
+               entity.getDistance(currentEntity) < this.cohesionRadius) {
                 neighborCount++;
                 cohX += currentEntity.x;
                 cohY += currentEntity.y;
@@ -160,16 +164,11 @@ export default class BoidsController {
         let sepZ = 0;
         let neighborCount = 0;
 
-        this.flockEntities.forEach(currentEntity => {
-            if(Math.abs(entity.x-currentEntity.x) > this.separationRadius ||
-            Math.abs(entity.y-currentEntity.y) > this.separationRadius ||
-            Math.abs(entity.z-currentEntity.z) > this.separationRadius)
-            {
-                return;
-            }
-
+        this.grid.getEntitiesInCube(entity.x, entity.y, entity.z, this.separationRadius, (currentEntity) => {
             const distance = entity.getDistance(currentEntity);
-            if(currentEntity != entity && distance < this.separationRadius) {
+            if(currentEntity != entity &&
+               currentEntity.getType() == Entity.FLOCK_ENTITY &&
+               distance < this.separationRadius) {
                 neighborCount++;
                 const sx = entity.x - currentEntity.x;
                 const sy = entity.y - currentEntity.y;
@@ -188,16 +187,11 @@ export default class BoidsController {
         let avoidY = 0;
         let avoidZ = 0;
 
-        this.obstacleEntities.forEach(currentObstacle => {
-            if(Math.abs(entity.x-currentObstacle.x) > this.obstacleRadius ||
-            Math.abs(entity.y-currentObstacle.y) > this.obstacleRadius ||
-            Math.abs(entity.z-currentObstacle.z) > this.obstacleRadius)
-            {
-                return;
-            }
-
+        this.grid.getEntitiesInCube(entity.x, entity.y, entity.z, this.obstacleRadius, (currentObstacle) => {
             const distance = entity.getDistance(currentObstacle);
-            if(distance > 0 && distance < this.obstacleRadius) {
+            if(distance > 0 &&
+                currentObstacle.getType() == Entity.OBSTACLE_ENTITY &&
+               distance < this.obstacleRadius) {
                 const ox = entity.x - currentObstacle.x;
                 const oy = entity.y - currentObstacle.y;
                 const oz = entity.z - currentObstacle.z;
