@@ -4,9 +4,10 @@ import Entity from './Entity.js'
 let stats = undefined;
 
 export default class ControlHelper {
-    constructor(boidsController, renderer) {
+    constructor(boidsController, renderer, workerPlanner) {
         this.boidsController = boidsController;
         this.renderer = renderer;
+        this.workerPlanner = workerPlanner;
     }
 
     init() {
@@ -21,6 +22,7 @@ export default class ControlHelper {
         gui.add(this.boidsController, 'separationWeight',0,5).name('Separation');
         gui.add(this.boidsController, 'maxEntitySpeed',1,10).name('Max Speed');
         gui.add(this.renderer.gridVisual, 'visible').name('Show Grid');
+        gui.add(this.renderer, 'lockOn').name('Lock Camera');
         this.boidsButton = gui.add(this, 'addBoids');
         this.obstacleButton = gui.add(this, 'addObstacles');
         
@@ -35,7 +37,7 @@ export default class ControlHelper {
         this.stats.end();
     }
 
-    addBoids(count=20) {
+    addBoids(count=50) {
         const boundary = this.boidsController.getBoundary();
         for(let i=0; i<count; i++) {
             const x = Math.floor(Math.random() * boundary[0]);
@@ -47,6 +49,10 @@ export default class ControlHelper {
             
             const entity = new Entity(Entity.FLOCK_ENTITY, x, y, z, vx, vy, vz);
             this.boidsController.addFlockEntity(entity);
+        }
+
+        if(this.workerPlanner) {
+            this.workerPlanner.sendInitialData();
         }
 
         this.updateButtonLabels();
@@ -61,6 +67,10 @@ export default class ControlHelper {
             
             const entity = new Entity(Entity.OBSTACLE_ENTITY, x, y, z);
             this.boidsController.addObstacleEntity(entity);
+        }
+
+        if(this.workerPlanner) {
+            this.workerPlanner.sendInitialData();
         }
 
         this.updateButtonLabels();

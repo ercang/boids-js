@@ -1,9 +1,6 @@
 export default class SimpleRenderer {
     constructor({boidsController}) {
         this.boidsController = boidsController;
-        this.entityMeshes = {};
-        this.obstacleMeshes = {};
-
         this.isDragging = false;
         this.mouseX = 0;
         this.mouseY = 0;
@@ -12,6 +9,7 @@ export default class SimpleRenderer {
         const b = this.boidsController.getBoundary();
         this.cameraMax = Math.max(b[0], b[1], b[2]);
         this.cameraRadius = this.cameraMax*2/3;
+        this.lockOn = false;
     }
 
     init() {
@@ -126,18 +124,27 @@ export default class SimpleRenderer {
     }
 
     updateCamera() {
-        const b = this.boidsController.getBoundary();
-        const midX = b[0]/2;
-        const midY = b[1]/2;
-        const midZ = b[2]/2;
+        let mx=0, my=0, mz=0;
+        const entities = this.boidsController.getFlockEntities();
+        if(this.lockOn && entities.length > 0) {
+            const mesh = entities[0].mesh;
+            mx = mesh.position.x;
+            my = mesh.position.y;
+            mz = mesh.position.z;
+        } else {
+            const b = this.boidsController.getBoundary();
+            mx = b[0]/2;
+            my = b[1]/2;
+            mz = b[2]/2;
+        }
 
         const degXPI = this.degX*Math.PI/180;
         const degYPI = this.degY*Math.PI/180;
-        this.camera.position.x = midX + Math.sin(degXPI)*Math.sin(degYPI)*this.cameraRadius;
-        this.camera.position.z = midZ + Math.cos(degXPI)*Math.sin(degYPI)*this.cameraRadius;
-        this.camera.position.y = midY + Math.cos(degYPI)*this.cameraRadius;
+        this.camera.position.x = mx + Math.sin(degXPI)*Math.sin(degYPI)*this.cameraRadius;
+        this.camera.position.z = mz + Math.cos(degXPI)*Math.sin(degYPI)*this.cameraRadius;
+        this.camera.position.y = my + Math.cos(degYPI)*this.cameraRadius;
 
-        this.camera.lookAt(midX, midY, midZ);
+        this.camera.lookAt(mx, my, mz);
     }
 
     render() {
@@ -149,17 +156,25 @@ export default class SimpleRenderer {
             const vx = entity.vx;
             const vy = entity.vy;
             const vz = entity.vz;
-            let mesh = this.entityMeshes[entity.id];
+            let mesh = entity.mesh;
             if(!mesh) {
                 mesh = new THREE.Mesh(this.entityGeometry, this.entityMaterial);
+                mesh.localVelocity = {x: 0, y: 0, z: 0};
                 this.scene.add(mesh);
-                this.entityMeshes[entity.id] = mesh;
+                entity.mesh = mesh;
             }
 
-            mesh.position.x = x;
-            mesh.position.y = y;
-            mesh.position.z = z;
-            mesh.lookAt(x + vx, y + vy, z + vz);
+            // apply asymptotic smoothing
+            mesh.position.x = 0.9*mesh.position.x + 0.1*x;
+            mesh.position.y = 0.9*mesh.position.y + 0.1*y;
+            mesh.position.z = 0.9*mesh.position.z + 0.1*z;
+            mesh.localVelocity.x = 0.9*mesh.localVelocity.x + 0.1*vx;
+            mesh.localVelocity.y = 0.9*mesh.localVelocity.y + 0.1*vy;
+            mesh.localVelocity.z = 0.9*mesh.localVelocity.z + 0.1*vz;
+
+            mesh.lookAt(mesh.position.x + mesh.localVelocity.x,
+                        mesh.position.y + mesh.localVelocity.y,
+                        mesh.position.z + mesh.localVelocity.z);
         });
 
         const obstacles = this.boidsController.getObstacleEntities();
@@ -167,17 +182,21 @@ export default class SimpleRenderer {
             const x = entity.x;
             const y = entity.y;
             const z = entity.z;
-            let mesh = this.obstacleMeshes[entity.id];
+            let mesh = entity.mesh;
             if(!mesh) {
                 mesh = new THREE.Mesh(this.obstacleGeometry, this.obstacleMaterial);
                 this.scene.add(mesh);
-                this.obstacleMeshes[entity.id] = mesh;
+                entity.mesh = mesh;
             }
             
             mesh.position.x = x;
             mesh.position.y = y;
             mesh.position.z = z;
-        })
+        });
+
+        if(this.lockOn && entities.length > 0) {
+            this.updateCamera();
+        }
 
         this.renderer.render(this.scene, this.camera);
     }

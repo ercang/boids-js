@@ -203,4 +203,79 @@ export default class BoidsController {
 
         return [avoidX, avoidY, avoidZ];
     }
+
+    serialize() {
+        const flockEntities = [];
+        const obstacleEntities = [];
+        this.flockEntities.forEach(entity => {
+            flockEntities.push(entity.serialize());
+        });
+
+        this.obstacleEntities.forEach(entity => {
+            obstacleEntities.push(entity.serialize());
+        });
+
+        return {
+            subDivisionCount: this.subDivisionCount,
+            boundaryX: this.boundaryX,
+            boundaryY: this.boundaryY,
+            boundaryZ: this.boundaryZ,
+            flockEntities,
+            obstacleEntities,
+            aligmentWeight: this.aligmentWeight,
+            cohesionWeight: this.cohesionWeight,
+            separationWeight: this.separationWeight,
+            maxEntitySpeed: this.maxEntitySpeed,
+            aligmentRadius: this.aligmentRadius,
+            cohesionRadius: this.cohesionRadius,
+            separationRadius: this.separationRadius,
+            obstacleRadius: this.obstacleRadius
+        }
+    }
+
+    serializeBoidsData(start=0, end=this.flockEntities.length) {
+        const flockEntities = [];
+        for(let i=start; i<end; i++) {
+            flockEntities.push(this.flockEntities[i].serialize());
+        }
+        return {start, flockEntities};
+    }
+
+    applyBoidsData(data) {
+        const start = data.start;
+        const flockEntities = data.flockEntities;
+        for(let i=0; i<flockEntities.length; i++) {
+            const entity = this.flockEntities[start+i];
+            const updatedData = flockEntities[i];
+            if(entity.id == updatedData.id) {
+                entity.updateData(updatedData);
+            } else {
+                console.log("ids do not match!");
+            }
+        }
+    }
+
+    static deserialize(data) {
+        const controller = new BoidsController(data.boundaryX, data.boundaryY, data.boundaryZ, data.subDivisionCount);
+        controller.aligmentWeight = data.aligmentWeight;
+        controller.cohesionWeight = data.cohesionWeight;
+        controller.separationWeight = data.separationWeight;
+        controller.maxEntitySpeed = data.maxEntitySpeed;
+        controller.aligmentRadius = data.aligmentRadius;
+        controller.cohesionRadius = data.cohesionRadius;
+        controller.separationRadius = data.separationRadius;
+        controller.obstacleRadius = data.obstacleRadius;
+
+        data.flockEntities.forEach(entityData => {
+            const entity = Entity.deserialize(entityData);
+            controller.addFlockEntity(entity);
+        });
+
+        data.obstacleEntities.forEach(entityData => {
+            const entity = Entity.deserialize(entityData);
+            controller.addObstacleEntity(entity);
+        });
+
+        return controller;
+    }
 }

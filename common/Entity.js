@@ -14,6 +14,7 @@ export default class Entity {
         this.vy = vy;
         this.vz = vz;
         this.grid = undefined;
+        this.mesh = undefined;
     }
 
     setGrid(grid) {
@@ -74,7 +75,6 @@ export default class Entity {
             this.vz = -this.vz;
         }
 
-        // TODO: update grid
         this.grid.moveEntity(this, nx, ny, nz);
     }
 
@@ -83,5 +83,27 @@ export default class Entity {
         const dy = this.y - otherEntity.y;
         const dz = this.z - otherEntity.z;
         return Math.sqrt((dx*dx)+(dy*dy)+(dz*dz));
+    }
+
+    serialize() {
+        const {id, type, x, y, z, vx, vy, vz} = this;
+        return {
+            id, type, x, y, z, vx, vy, vz
+        }
+    }
+
+    updateData(data) {
+        if(this.id == data.id) {
+            this.vx = data.vx;
+            this.vy = data.vy;
+            this.vz = data.vz;
+            this.grid.moveEntity(this, data.x, data.y, data.z);
+        }
+    }
+
+    static deserialize(data) {
+        const e = new Entity(data.type, data.x, data.y, data.z, data.vx, data.vy, data.vz);
+        e.id = data.id;
+        return e;
     }
 }
