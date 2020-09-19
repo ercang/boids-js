@@ -6,7 +6,7 @@ export default class BoidsWorkerPlanner {
         this.workers = [];
         this.workerCompletedCount = 0;
         for(let i=0; i<this.workerCount; i++) {
-            this.workers.push(new Worker("BoidsWorker.js", {type: "module"}));
+            this.workers.push(new Worker("../common/BoidsWorker.js", {type: "module"}));
         }
 
         this.workers.forEach((worker, index) => {

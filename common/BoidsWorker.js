@@ -1,4 +1,4 @@
-import BoidsController from '../common/BoidsController.js'
+import BoidsController from './BoidsController.js'
 
 class BoidsWorker {
   constructor() {

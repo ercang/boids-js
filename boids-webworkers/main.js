@@ -1,7 +1,7 @@
 import BoidsController from '../common/BoidsController.js'
 import SimpleRenderer from '../common/SimpleRenderer.js'
 import ControlHelper from '../common/ControlHelper.js'
-import BoidsWorkerPlanner from './BoidsWorkerPlanner.js'
+import BoidsWorkerPlanner from '../common/BoidsWorkerPlanner.js'
 
 
 class Application {
