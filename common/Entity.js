@@ -1,9 +1,6 @@
 let idCounter = 0;
 
 export default class Entity {
-    static FLOCK_ENTITY = 1;
-    static OBSTACLE_ENTITY = 2;
-
     constructor(type, x=0, y=0, z=0, vx=0, vy=0, vz=0) {
         this.id = ++idCounter;
         this.type = type;
@@ -15,6 +12,9 @@ export default class Entity {
         this.vz = vz;
         this.grid = undefined;
         this.mesh = undefined;
+
+        this.FLOCK_ENTITY = 1;
+        this.OBSTACLE_ENTITY = 1;
     }
 
     setGrid(grid) {
