@@ -51,30 +51,13 @@ export default class Entity {
         let ny = this.y + this.vy;
         let nz = this.z + this.vz;
 
-        if(nx < 0) {
-            nx = 0;
-            this.vx = -this.vx;
-        } else if(nx > bx) {
-            nx = bx;
-            this.vx = -this.vx;
-        }
-
-        if(ny < 0) {
-            ny = 0;
-            this.vy = -this.vy;
-        } else if(ny > by) {
-            ny = by;
-            this.vy = -this.vy;
-        }
-
-        if(nz < 0) {
-            nz = 0;
-            this.vz = -this.vz;
-        } else if(nz > bz) {
-            nz = bz;
-            this.vz = -this.vz;
-        }
-
+        nx = Math.max(0, nx);
+        nx = Math.min(bx, nx);
+        ny = Math.max(0, ny);
+        ny = Math.min(by, ny);
+        nz = Math.max(0, nz);
+        nz = Math.min(bz, nz);
+        
         this.grid.moveEntity(this, nx, ny, nz);
     }
 

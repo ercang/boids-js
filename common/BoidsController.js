@@ -190,7 +190,7 @@ export default class BoidsController {
         this.grid.getEntitiesInCube(entity.x, entity.y, entity.z, this.obstacleRadius, (currentObstacle) => {
             const distance = entity.getDistance(currentObstacle);
             if(distance > 0 &&
-                currentObstacle.getType() == Entity.OBSTACLE_ENTITY &&
+               currentObstacle.getType() == Entity.OBSTACLE_ENTITY &&
                distance < this.obstacleRadius) {
                 const ox = entity.x - currentObstacle.x;
                 const oy = entity.y - currentObstacle.y;
@@ -200,6 +200,24 @@ export default class BoidsController {
                 avoidZ += (oz/distance)/distance;
             }
         });
+
+        // avoid boundary limits
+        const boundaryObstacleRadius = this.obstacleRadius/4;
+        if(entity.x < boundaryObstacleRadius) {
+            avoidX += 1/entity.x;
+        } else if(this.boundaryX - entity.x < boundaryObstacleRadius) {
+            avoidX -= 1/(this.boundaryX - entity.x);
+        }
+        if(entity.y < boundaryObstacleRadius) {
+            avoidY += 1/entity.y;
+        } else if(this.boundaryY - entity.y < boundaryObstacleRadius) {
+            avoidY -= 1/(this.boundaryY - entity.y);
+        }
+        if(entity.z < boundaryObstacleRadius) {
+            avoidZ += 1/entity.z;
+        } else if(this.boundaryZ - entity.z < boundaryObstacleRadius) {
+            avoidZ -= 1/(this.boundaryZ - entity.z);
+        }
 
         return [avoidX, avoidY, avoidZ];
     }
