@@ -4,8 +4,8 @@ BoidsJS is an implementation of the boids algorithm. This can be used for simula
 
 There are three examples provided for similar scenes but three examples differ in performance. 
 - The first example run in the browser thread and it should slow down when there are many number of entities. 
-- The seconds example also runs in the browser thread but it uses the grid implementation for fast lookups. This example should handle more entities in the browser thread.
-- In the third example calculation is done in 4 parallel WebWorker threads. Rendering is still done in the browser thread. Even though the simulation slows down, the renderer should work in 60fps.
+- The second example also runs in the browser thread but it uses the grid implementation for fast lookups. This example should handle more entities in the browser thread.
+- In the third example, calculation is done in 4 parallel WebWorker threads. The rendering is still done in the browser thread. Even though the simulation slows down, the UI should be updated in 60fps.
 
 ## Examples
 
