@@ -1,3 +1,9 @@
+/**
+ * @module BoidsWorkerPlanner 
+ * BoidsWorkerPlanner is a class to help creating multiple workers and
+ * distributing the work to these separate workers. It also deals with
+ * synchronization of the data among workers and the application 
+ */
 export default class BoidsWorkerPlanner {
     constructor(boidsController, updateCallback, workerCount = 4) {
         this.boidsController = boidsController;
@@ -14,10 +20,16 @@ export default class BoidsWorkerPlanner {
         });
     }
 
+    /**
+     * Initializes the worker planner
+     */
     init() {
         this.sendInitialData();
     }
 
+    /**
+     * Sends the BoidsController data to all workers for initial setup.
+     */
     sendInitialData() {
         // copy boids controller state to web worker
         const data = this.boidsController.serialize();
@@ -26,6 +38,10 @@ export default class BoidsWorkerPlanner {
         });
     }
 
+    /**
+     * This method is called when the application wants all workers to calculate the next iteration.
+     * This can only be called when the previous request was completed.
+     */
     requestIterate() {
         if(this.workerCompletedCount != 0) {
             console.log("Previous request must be completed first!")
@@ -48,6 +64,10 @@ export default class BoidsWorkerPlanner {
         });
     }
 
+    /**
+     * Message handler for worker classes. This method synchronizes the data and
+     * lets application know when the data is ready.
+     */
     onWorkerMessageReceived(index, e) {
         if(e.data.action == 'iterateCompleted') {
             this.boidsController.applyBoidsData(e.data.data);

@@ -1,7 +1,21 @@
 import Entity from './Entity.js';
 import Grid from './Grid.js'
 
+/**
+ * @module BoidsController 
+ * BoidsController class defines a container for boids entities.
+ * All entities (flock or obstalces) are added to BoidsController.
+ * BoidsController calculates and updates entity positions and velocities.
+ */
 export default class BoidsController {
+    /**
+     * Constructor for the BoidsController
+     * @param {Number} boundaryX world size in x axis
+     * @param {Number} boundaryY world size in y axis
+     * @param {Number} boundaryZ world size in z axis
+     * @param {Number} subDivisionCount subdivision count defines the grid size. 
+     * If it is given 10, world will be splitted into 10*10*10 cubes for spatial partitioning.
+     */
     constructor(boundaryX = 500, boundaryY = 500, boundaryZ = 500, subDivisionCount=1) {
         const maxSize = Math.max(boundaryX, boundaryY, boundaryZ);
         this.grid = new Grid(maxSize, maxSize/subDivisionCount);
@@ -26,50 +40,98 @@ export default class BoidsController {
         this.obstacleRadius = 100;
     }
 
+    /**
+     * Adds flock entity to boids container
+     * @param {Entity} entity 
+     */
     addFlockEntity(entity) {
         this.grid.addEntity(entity);
         this.flockEntities.push(entity);
     }
 
+    /**
+     * Returns flock entities
+     * @returns {Array} flock entities
+     */
     getFlockEntities() {
         return this.flockEntities;
     }
 
+    /**
+     * Adds obstacle entity to boids controller
+     * @param {Entity} entity 
+     */
     addObstacleEntity(entity) {
         this.grid.addEntity(entity);
         this.obstacleEntities.push(entity);
     }
 
+    /**
+     * Returns obstacle entities
+     * @returns {Array} obstacle entities
+     */
     getObstacleEntities() {
         return this.obstacleEntities;
     }
 
+    /**
+     * Returns world boundary
+     * @returns {Array} boundary vector
+     */
     getBoundary() {
         return [this.boundaryX, this.boundaryY, this.boundaryZ];
     }
 
+    /**
+     * Sets max speed for flock entities.
+     * @param {Number} s 
+     */
     setMaxSpeed(s) {
         this.maxEntitySpeed = s;
     }
 
+    /**
+     * Sets aligment weight. This changes how much flock entities are effected by each others alignment
+     * @param {Number} w 
+     */
     setAligmentWeight(w) {
         this.aligmentWeight = w;
     }
 
+    /**
+     * Sets cohesion weight. This changes how much flock entities are inclined to stick together
+     * @param {Number} w 
+     */
     setCohesionWeight(w) {
         this.cohesionWeight = w;
     }
 
+    /**
+     * Sets separation weight. This changes how much flock entities are inclined to separate from each together
+     * @param {Number} w 
+     */
     setSeparationWeight(w) {
         this.separationWeight = w;
     }
 
+    /**
+     * Sets world boundary
+     * @param {Number} x 
+     * @param {Number} y 
+     * @param {Number} z 
+     */
     setBoundary(x, y, z) {
         this.boundaryX = x;
         this.boundaryY = y;
         this.boundaryZ = z;
     }
 
+    /**
+     * iterate calculates the new position for flock entities.
+     * start and end indices are used for parallelization of this calculation
+     * @param {Number} start start index for calculation
+     * @param {Number} end end index for calculation
+     */
     iterate(start=0, end=this.flockEntities.length) {
         for(let i=start; i<end; i++) {
             const entity = this.flockEntities[i];
@@ -91,6 +153,11 @@ export default class BoidsController {
         }
     }
 
+    /**
+     * Computes alignment vector for the given entity
+     * @param {Entity} entity 
+     * @returns {Array} alignment vector
+     */
     computeAlignment(entity) {
         let aligmentX = 0;
         let aligmentY = 0;
@@ -122,6 +189,11 @@ export default class BoidsController {
         return [aligmentX, aligmentY, aligmentZ];
     }
 
+    /**
+     * Computes cohesion vector for the given entity
+     * @param {Entity} entity 
+     * @returns {Array} cohesion vector
+     */
     computeCohesion(entity) {
         let cohX = 0;
         let cohY = 0;
@@ -158,6 +230,11 @@ export default class BoidsController {
         return [cohX, cohY, cohZ];
     }
 
+    /**
+     * Computes separation vector for the given entity
+     * @param {Entity} entity 
+     * @returns {Array} separation vector
+     */
     computeSeparation(entity) {
         let sepX = 0;
         let sepY = 0;
@@ -182,6 +259,11 @@ export default class BoidsController {
         return [sepX, sepY, sepZ];
     }
 
+    /**
+     * Computes obstacle avoidance vector for the given entity
+     * @param {Entity} entity 
+     * @returns {Array} obstacle avoidance vector
+     */
     computeObstacles(entity) {
         let avoidX = 0;
         let avoidY = 0;
@@ -222,6 +304,11 @@ export default class BoidsController {
         return [avoidX, avoidY, avoidZ];
     }
 
+    /**
+     * This methods serializes the whole boids controller with entities and
+     * returns as a simple object.
+     * @returns {Object} serialized BoidsController data
+     */
     serialize() {
         const flockEntities = [];
         const obstacleEntities = [];
@@ -251,6 +338,12 @@ export default class BoidsController {
         }
     }
 
+    /**
+     * This methods serializes only the boids data for the given start and end indices.
+     * @param {Number} start 
+     * @param {Number} end 
+     * @returns {Object} serialized partial boids data
+     */
     serializeBoidsData(start=0, end=this.flockEntities.length) {
         const flockEntities = [];
         for(let i=start; i<end; i++) {
@@ -259,6 +352,10 @@ export default class BoidsController {
         return {start, flockEntities};
     }
 
+    /**
+     * Applies the serialized boids data.
+     * @param {Object} data 
+     */
     applyBoidsData(data) {
         const start = data.start;
         const flockEntities = data.flockEntities;
@@ -273,6 +370,12 @@ export default class BoidsController {
         }
     }
 
+    /**
+     * This static method deserializes a boids controller data
+     * and creates a new BoidsController instance.
+     * @param {Object} data 
+     * @returns {BoidsController} deserialized BoidsController instance
+     */
     static deserialize(data) {
         const controller = new BoidsController(data.boundaryX, data.boundaryY, data.boundaryZ, data.subDivisionCount);
         controller.aligmentWeight = data.aligmentWeight;

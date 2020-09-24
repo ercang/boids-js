@@ -3,6 +3,10 @@ import Entity from './Entity.js'
 
 let stats = undefined;
 
+/**
+ * @module ControlHelper 
+ * A helper class to make examples easier.
+ */
 export default class ControlHelper {
     constructor(boidsController, renderer, workerPlanner) {
         this.boidsController = boidsController;

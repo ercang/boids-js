@@ -1,3 +1,7 @@
+/**
+ * @module SimpleRenderer 
+ * SimpleRenderer helps visualizing the entities in the BoidsController and controls the camera.
+ */
 export default class SimpleRenderer {
     constructor({boidsController}) {
         this.boidsController = boidsController;

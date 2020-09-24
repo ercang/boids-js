@@ -13,34 +13,42 @@ class Application {
     }
 
     init() {
+        // create a boids controller with the given boundary [2000, 600, 2000]
         this.boidsController = new BoidsController(2000, 600, 2000);
 
-        // init renderer
+        // create renderer and pass boidsController to render entities
         this.simpleRenderer = new SimpleRenderer({boidsController: this.boidsController});
         this.simpleRenderer.init();
 
+        // create control helper for example controls
         this.controlHelper = new ControlHelper(this.boidsController, this.simpleRenderer);
         this.controlHelper.init();
 
-        // add initial entities
+        // add initial entities for an interesting view
         this.controlHelper.addBoids(this.flockEntityCount);
         this.controlHelper.addObstacles(this.obstacleEntityCount);
         
-        // request frame
+        // request the first animation frame
         window.requestAnimationFrame(this.render.bind(this));
     }
 
     render() {
         window.requestAnimationFrame(this.render.bind(this));
     
+        // call statBegin() to measure time that is spend in BoidsController
         this.controlHelper.statBegin();
         
+        // calculate boids entities
         this.boidsController.iterate();
+
+        // update screen by rendering
         this.simpleRenderer.render();
         
+        // call statEnd() to finalize measuring time
         this.controlHelper.statEnd();
     }
 
 }
 
+// create the application when the document is ready
 document.addEventListener('DOMContentLoaded', (new Application()).init());
