@@ -25,7 +25,11 @@ export default class ControlHelper {
         gui.add(this.boidsController, 'cohesionWeight',0,5).name('Cohesion');
         gui.add(this.boidsController, 'separationWeight',0,5).name('Separation');
         gui.add(this.boidsController, 'maxEntitySpeed',1,10).name('Max Speed');
-        gui.add(this.renderer.gridVisual, 'visible').name('Show Grid');
+
+        if(this.boidsController.subDivisionCount > 1) {
+            gui.add(this.renderer.gridVisual, 'visible').name('Show Grid');
+        }
+        
         gui.add(this.renderer, 'lockOn').name('Lock Camera');
         this.boidsButton = gui.add(this, 'addBoids');
         this.obstacleButton = gui.add(this, 'addObstacles');
