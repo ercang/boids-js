@@ -1,8 +1,8 @@
 
 /**
  * @module Grid 
- * Grid class creates cubic grids for spatial partitioning.
- * This helps faster lookups for nearby entities.
+ * Grid class creates cubic grid for spatial partitioning.
+ * This helps lookups to be performed faster for nearby entities.
  * More information can be found here:
  * http://gameprogrammingpatterns.com/spatial-partition.html
  */

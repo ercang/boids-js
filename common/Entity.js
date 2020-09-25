@@ -60,7 +60,7 @@ export default class Entity {
      */
     checkVelocity(maxVelocity = 1) {
         const velocity = this.getVelocity();
-        if(velocity > maxVelocity) {
+        if(velocity > maxVelocity && velocity > 0) {
             this.vx = maxVelocity*this.vx/velocity;
             this.vy = maxVelocity*this.vy/velocity;
             this.vz = maxVelocity*this.vz/velocity;

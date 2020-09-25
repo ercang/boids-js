@@ -2,7 +2,7 @@ import BoidsController from './BoidsController.js'
 
 /**
  * @module BoidsWorker 
- * BoidsWorker is the wrapper for BoidsController to make it works inside a WebWorker context
+ * BoidsWorker is the wrapper for BoidsController to make it work inside a WebWorker context
  * The responsibility of this class is to create a new BoidsController instance with 
  * the received data and run the requested iterations in this isolated context.
  */

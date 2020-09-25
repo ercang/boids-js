@@ -29,7 +29,7 @@ export default class BoidsController {
         this.boundaryZ = boundaryZ;
 
         this.aligmentWeight = 2.0;
-        this.cohesionWeight = 1.5;
+        this.cohesionWeight = 4;
         this.separationWeight = 0.3;
 
         this.maxEntitySpeed = 5;
@@ -181,9 +181,11 @@ export default class BoidsController {
             aligmentY /= neighborCount;
             aligmentZ /= neighborCount;
             const aligmentMag = Math.sqrt((aligmentX*aligmentX)+(aligmentY*aligmentY)+(aligmentZ*aligmentZ));
-            aligmentX /= aligmentMag;
-            aligmentY /= aligmentMag;
-            aligmentZ /= aligmentMag;
+            if(aligmentMag > 0) {
+                aligmentX /= aligmentMag;
+                aligmentY /= aligmentMag;
+                aligmentZ /= aligmentMag;
+            }
         }
 
         return [aligmentX, aligmentY, aligmentZ];
@@ -222,9 +224,11 @@ export default class BoidsController {
             cohZ = cohZ - entity.z;
 
             var cohMag = Math.sqrt((cohX*cohX)+(cohY*cohY)+(cohZ*cohZ));
-            cohX /= cohMag;
-            cohY /= cohMag;
-            cohZ /= cohMag;
+            if(cohMag > 0) {
+                cohX /= cohMag;
+                cohY /= cohMag;
+                cohZ /= cohMag;
+            }
         }
 
         return [cohX, cohY, cohZ];
@@ -242,7 +246,11 @@ export default class BoidsController {
         let neighborCount = 0;
 
         this.grid.getEntitiesInCube(entity.x, entity.y, entity.z, this.separationRadius, (currentEntity) => {
-            const distance = entity.getDistance(currentEntity);
+            let distance = entity.getDistance(currentEntity);
+            if(distance <= 0) {
+                distance = 0.01
+            }
+            
             if(currentEntity != entity &&
                currentEntity.getType() == Entity.FLOCK_ENTITY &&
                distance < this.separationRadius) {
@@ -285,20 +293,23 @@ export default class BoidsController {
 
         // avoid boundary limits
         const boundaryObstacleRadius = this.obstacleRadius/4;
-        if(entity.x < boundaryObstacleRadius) {
+        const distX = this.boundaryX - entity.x;
+        const distY = this.boundaryY - entity.y;
+        const distZ = this.boundaryZ - entity.z;
+        if(entity.x < boundaryObstacleRadius && Math.abs(entity.x) > 0) {
             avoidX += 1/entity.x;
-        } else if(this.boundaryX - entity.x < boundaryObstacleRadius) {
-            avoidX -= 1/(this.boundaryX - entity.x);
+        } else if(distX < boundaryObstacleRadius && distX > 0) {
+            avoidX -= 1/distX;
         }
-        if(entity.y < boundaryObstacleRadius) {
+        if(entity.y < boundaryObstacleRadius && Math.abs(entity.y) > 0) {
             avoidY += 1/entity.y;
-        } else if(this.boundaryY - entity.y < boundaryObstacleRadius) {
-            avoidY -= 1/(this.boundaryY - entity.y);
+        } else if(distY < boundaryObstacleRadius && distY > 0) {
+            avoidY -= 1/distY;
         }
-        if(entity.z < boundaryObstacleRadius) {
+        if(entity.z < boundaryObstacleRadius && Math.abs(entity.z) > 0) {
             avoidZ += 1/entity.z;
-        } else if(this.boundaryZ - entity.z < boundaryObstacleRadius) {
-            avoidZ -= 1/(this.boundaryZ - entity.z);
+        } else if(distZ < boundaryObstacleRadius && distZ > 0) {
+            avoidZ -= 1/distZ;
         }
 
         return [avoidX, avoidY, avoidZ];
