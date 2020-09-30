@@ -50,6 +50,9 @@ export default class SimpleRenderer {
         this.renderer.domElement.addEventListener('mouseup', this.onMouseUp.bind(this));
         this.renderer.domElement.addEventListener('mousemove', this.onMouseMove.bind(this));
         this.renderer.domElement.addEventListener('wheel', this.onMouseWheel.bind(this));
+        this.renderer.domElement.addEventListener('touchstart', this.touchStart.bind(this), false);
+        this.renderer.domElement.addEventListener('touchmove', this.touchMove.bind(this), false);
+        this.renderer.domElement.addEventListener('touchend', this.touchEnd.bind(this), false);
 
         this.updateCamera();
         this.render();
@@ -85,6 +88,43 @@ export default class SimpleRenderer {
 
         this.scene.add(this.gridVisual);
         this.gridVisual.visible = false;
+    }
+
+    touchStart(e) {
+        const t = e.changedTouches[0];
+        this.mouseX = t.pageX;
+        this.mouseY = t.pageY;
+        this.isDragging = true;
+    }
+
+    touchEnd(e) {
+        this.isDragging = false;
+    }
+
+    touchMove(e) {
+        if(!this.isDragging) {
+            return;
+        }
+
+        e.preventDefault();
+
+        const t = e.changedTouches[0];
+
+        const dx = t.pageX - this.mouseX;
+        const dy = t.pageY - this.mouseY;
+
+        this.mouseX = t.pageX;
+        this.mouseY = t.pageY;
+
+        this.degX += dx;
+        if(this.degX > 360) this.degX = 0;
+        if(this.degX < 0) this.degX = 360;
+
+        this.degY += dy/3;
+        this.degY = Math.max(0.1, this.degY);
+        this.degY = Math.min(179.9, this.degY);
+        
+        this.updateCamera();
     }
 
     onMouseDown(e) {
